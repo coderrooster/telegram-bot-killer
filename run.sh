@@ -7,7 +7,7 @@ LOG_DIR="$PROJECT_DIR/logs-cron"
 LOG_FILE="$LOG_DIR/log-cron-$(date +'%Y-%m-%d').log"
 GO_FILE="$PROJECT_DIR/kill-bot.go"
 BINARY="$PROJECT_DIR/kill-bot"
-RETENTION_DAYS=30
+RETENTION_DAYS=7
 
 # === enter your project directory here ===
 cd "$PROJECT_DIR" || {
@@ -46,4 +46,5 @@ echo "[INFO] === $(date '+%Y-%m-%d %H:%M:%S') - Run Started ===" >> "$LOG_FILE"
 echo "[INFO] === $(date '+%Y-%m-%d %H:%M:%S') - Run Finished ===" >> "$LOG_FILE"
 
 # === delete logs older than RETENTION_DAYS ===
-find "$LOG_DIR" -name "log-cron-*.log" -type f -mtime +$RETENTION_DAYS -exec rm {} \;
+find "$LOG_DIR" -name "log-*.log" -type f -mtime +$RETENTION_DAYS -exec rm {} \;
+find "$LOG_DIR" -name "logs-cron/log-cron-*.log" -type f -mtime +$RETENTION_DAYS -exec rm {} \;

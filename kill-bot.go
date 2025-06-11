@@ -15,16 +15,12 @@ import (
 
 // example: https://api.telegram.org/bot1234567890:AAG-abcdefghijklmnopqrstuvwxyz/sendMessage?parse_mode=markdown&chat_id=1234567890&text="test message"
 
-const (
-	message = "💰💰Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut bibendum elit erat, nec finibus justo porta vel. Etiam et nisi molestie, tincidunt tortor sit amet, tincidunt urna. Aliquam faucibus id sem id fringilla. Sed sed dolor elit. Nunc a arcu tristique, suscipit nunc in, venenatis quam. Nam efficitur elit vulputate molestie placerat. ❌❌ Maecenas consectetur sagittis sapien. Nam venenatis scelerisque diam. Suspendisse imperdiet sagittis magna, at ultricies quam. Suspendisse auctor nulla ac lorem dapibus scelerisque. 💰💰"
-)
-
 func sendMessage(i int, logger *log.Logger) error {
 	url := fmt.Sprintf("https://api.telegram.org/bot%s/sendMessage", os.Getenv("BOT_TOKEN"))
 
 	body := map[string]interface{}{
 		"chat_id": os.Getenv("CHAT_ID"),
-		"text":    fmt.Sprintf("%s #%d", message, i),
+		"text":    fmt.Sprintf("%s #%d", os.Getenv("CHAT_MESSAGE"), i),
 	}
 	bodyJSON, _ := json.Marshal(body)
 
