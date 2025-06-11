@@ -25,7 +25,12 @@ if [ ! -f "$ENV_FILE" ]; then
 fi
 
 # load all environment variables from .env file except comments and empty lines
-export $(grep -v '^#' "$ENV_FILE" | xargs)
+# export $(grep -v '^#' "$ENV_FILE" | xargs)
+
+# Safe way to load .env with support for quotes and spaces
+set -a
+source "$ENV_FILE"
+set +a
 
 # === Build binary if not exists ===
 if [ ! -f "$BINARY" ]; then
