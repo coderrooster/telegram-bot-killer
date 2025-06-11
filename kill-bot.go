@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math/rand"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -13,16 +14,65 @@ import (
 	"time"
 )
 
-// example: https://api.telegram.org/bot1234567890:AAG-abcdefghijklmnopqrstuvwxyz/sendMessage?parse_mode=markdown&chat_id=1234567890&text="test message"
+const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+var (
+	cachedMessage       string
+	lastGeneratedMinute int
+)
+
+func generateRandomString(n int) string {
+	b := make([]byte, n)
+	for i := range b {
+		b[i] = letterBytes[rand.Intn(len(letterBytes))]
+	}
+	return string(b)
+}
+
+func getCachedOrNewMessage(length int) string {
+	currentMinute := time.Now().Minute()
+	if currentMinute != lastGeneratedMinute || cachedMessage == "" {
+		cachedMessage = generateRandomString(length)
+		lastGeneratedMinute = currentMinute
+	}
+	return cachedMessage
+}
+
+func getEnvString(key string, defaultVal string) string {
+	val := os.Getenv(key)
+	if val == "" {
+		return defaultVal
+	}
+	return val
+}
+
+func getEnvInt(key string, defaultVal int) int {
+	valStr := os.Getenv(key)
+	if val, err := strconv.Atoi(valStr); err == nil {
+		return val
+	}
+	return defaultVal
+}
 
 func sendMessage(i int, logger *log.Logger) error {
-	url := fmt.Sprintf("https://api.telegram.org/bot%s/sendMessage", os.Getenv("BOT_TOKEN"))
+	url := fmt.Sprintf("https://api.telegram.org/bot%s/sendMessage", getEnvString("BOT_TOKEN", ""))
+
+	messageLength := getEnvInt("CHAT_MESSAGE_LENGTH", 1000)
+	if messageLength > 4000 {
+		messageLength = 4000
+	}
+
+	chatText := getCachedOrNewMessage(messageLength)
 
 	body := map[string]interface{}{
-		"chat_id": os.Getenv("CHAT_ID"),
-		"text":    fmt.Sprintf("%s #%d", os.Getenv("CHAT_MESSAGE"), i),
+		"chat_id": getEnvString("CHAT_ID", ""),
+		"text":    fmt.Sprintf("%s #%d", chatText, i),
 	}
-	bodyJSON, _ := json.Marshal(body)
+	bodyJSON, err := json.Marshal(body)
+	if err != nil {
+		logger.Printf("[ERROR] Failed to marshal request body: %v\n", err)
+		return err
+	}
 
 	resp, err := http.Post(url, "application/json", bytes.NewBuffer(bodyJSON))
 	if err != nil {
@@ -32,11 +82,12 @@ func sendMessage(i int, logger *log.Logger) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		// Baca isi respons error dari Telegram
 		var resBody map[string]interface{}
-		json.NewDecoder(resp.Body).Decode(&resBody)
+		if err := json.NewDecoder(resp.Body).Decode(&resBody); err != nil {
+			logger.Printf("[ERROR] Failed to parse error response: %v\n", err)
+		}
+		logger.Printf("[ERROR] Send #%d failed - Status: %d - Response: %v\n", i, resp.StatusCode, resBody)
 
-		logger.Printf("[ERROR] Send #%d failed - Status: %d - Response: %s\n", i, resp.StatusCode, resBody)
 		if resp.StatusCode == 429 {
 			return fmt.Errorf("Too Many Requests")
 		}
@@ -48,19 +99,18 @@ func sendMessage(i int, logger *log.Logger) error {
 }
 
 func main() {
-	// get current working directory
+	rand.Seed(time.Now().UnixNano())
+
 	folderPath, err := os.Getwd()
 	if err != nil {
 		fmt.Println("[FATAL] Failed to get working directory:", err)
 		return
 	}
 
-	// file name with format "log-YYYY-MM-DD.log"
 	dateStr := time.Now().Format("2006-01-02")
 	logFilename := fmt.Sprintf("log-%s.log", dateStr)
 	logPath := filepath.Join(folderPath, logFilename)
 
-	// open or create log file
 	file, err := os.OpenFile(logPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		fmt.Println("[FATAL] Failed to open log file:", err)
@@ -68,38 +118,24 @@ func main() {
 	}
 	defer file.Close()
 
-	// Logger ke file + console
 	multiWriter := io.MultiWriter(file, os.Stdout)
 	logger := log.New(multiWriter, "", log.LstdFlags)
 
+	if getEnvString("BOT_TOKEN", "") == "" || getEnvString("CHAT_ID", "") == "" {
+		logger.Println("[FATAL] BOT_TOKEN or CHAT_ID is not set.")
+		return
+	}
+
 	logger.Println("=== Starting Telegram Bot Kill ===")
 
-	// set request tries from env variable, default to 100
-	requestTriesStr := os.Getenv("REQUEST_EVERY_TRIES")
-	requestTries := 100 // default value
-	if requestTriesStr != "" {
-		if v, err := strconv.Atoi(requestTriesStr); err == nil {
-			requestTries = v
-		} else {
-			logger.Printf("[WARN] Invalid REQUEST_EVERY_TRIES value: %v. Using default 100.\n", err)
-		}
-	}
+	requestTries := getEnvInt("REQUEST_EVERY_TRIES", 100)
+	sleepTime := getEnvInt("SLEEP_TIME", 5)
 
 	for i := 1; i <= requestTries; i++ {
 		err := sendMessage(i, logger)
 		if err != nil {
-			logger.Println("[INFO] Error occurred, waiting 5 seconds before retrying...")
+			logger.Println("[INFO] Error occurred, waiting before retrying...")
 			logger.Printf("[INFO] Error: %v\n", err)
-
-			sleepTimeStr := os.Getenv("SLEEP_TIME")
-			sleepTime := 5 // default to 5 seconds if not set or invalid
-			if sleepTimeStr != "" {
-				if v, err := strconv.Atoi(sleepTimeStr); err == nil {
-					sleepTime = v
-				} else {
-					logger.Printf("[WARN] Invalid SLEEP_TIME value: %v. Using default 5 seconds.\n", err)
-				}
-			}
 			time.Sleep(time.Duration(sleepTime) * time.Second)
 		} else {
 			time.Sleep(100 * time.Millisecond)
