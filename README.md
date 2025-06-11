@@ -32,8 +32,9 @@ Example:
 ```env
 BOT_TOKEN=123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11
 CHAT_ID=123456789
-REQUEST_EVERY_TRIES=100
+REQUEST_EVERY_TRIES=1000
 SLEEP_TIME=5
+CHAT_MESSAGE_LENGTH=1000
 ```
 
 ⚠️ Replace BOT_TOKEN and CHAT_ID with your actual Telegram bot token and target chat ID.
