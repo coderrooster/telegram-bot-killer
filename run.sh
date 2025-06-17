@@ -4,10 +4,10 @@
 PROJECT_DIR="/www/wwwroot/telegram-bot-killer"
 ENV_FILE="$PROJECT_DIR/.env"
 LOG_DIR="$PROJECT_DIR/logs-cron"
-LOG_FILE="$LOG_DIR/log-cron-$(date +'%Y-%m-%d').log"
+LOG_FILE="$LOG_DIR/log-$(date +'%Y-%m-%d').log"
 GO_FILE="$PROJECT_DIR/kill-bot.go"
 BINARY="$PROJECT_DIR/kill-bot"
-RETENTION_DAYS=7
+RETENTION_DAYS=3
 
 # === enter your project directory here ===
 cd "$PROJECT_DIR" || {

@@ -66,7 +66,7 @@ func sendMessage(i int, logger *log.Logger) error {
 
 	body := map[string]interface{}{
 		"chat_id": getEnvString("CHAT_ID", ""),
-		"text":    fmt.Sprintf("%s #%d", chatText, i),
+		"text":    fmt.Sprintf("%s", chatText),
 	}
 	bodyJSON, err := json.Marshal(body)
 	if err != nil {
@@ -138,7 +138,7 @@ func main() {
 			logger.Printf("[INFO] Error: %v\n", err)
 			time.Sleep(time.Duration(sleepTime) * time.Second)
 		} else {
-			time.Sleep(100 * time.Millisecond)
+			time.Sleep(500 * time.Millisecond)
 		}
 	}
 
