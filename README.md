@@ -6,9 +6,9 @@ This is a simple Telegram bot killer script written in Go that sends periodic me
 ## 🧾 Features
 - Sends messages to a Telegram bot chat using the Telegram API
 - Customizable via `.env` file
-- Daily log rotation stored in a `logs/` directory
+- Daily log rotation stored in a `logs-cron/` directory
 - Automatically builds the binary from `kill.go` if it does not exist
-- Automatically removes logs older than 30 days
+- Automatically keep logs for a certain number of days
 
 ---
 
@@ -20,7 +20,7 @@ telegram-bot-killer/
 ├── .env # Environment variable configuration
 ├── run.sh # Main execution script (called by cron)
 └── logs-cron/
-└── log-cron-YYYY-MM-DD.txt # Daily logs
+    └── log-YYYY-MM-DD.log # Daily logs
 ```
 ---
 
@@ -32,7 +32,7 @@ Example:
 ```env
 BOT_TOKEN=123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11
 CHAT_ID=123456789
-REQUEST_EVERY_TRIES=1000
+REQUEST_EVERY_TRIES=500
 SLEEP_TIME=5
 CHAT_MESSAGE_LENGTH=1000
 ```
@@ -50,13 +50,13 @@ bash run.sh
 ```
 Output will be logged to:
 ```
-logs-cron/log-cron-YYYY-MM-DD.txt
+logs-cron/log-YYYY-MM-DD.log
 ```
 ---
 
 ## 🧹 Log Cleanup
 ```
-find logs-cron/ -name "log-cron-*.txt" -type f -mtime +30 -delete
+find logs-cron/ -name "log-*.log" -type f -mtime +30 -delete
 ```
 ---
 
@@ -76,7 +76,7 @@ Add this line at the bottom of the crontab file:
 ```
 🔁 This example runs the bot every 5 minutes. Adjust the timing as needed.
 
-Make sure to replace ```/path/to/your/project/``` with the actual full path to your project directory (```e.g. /home/username/telegram-bot/```).
+Make sure to replace ```/path/to/your/project/``` with the actual full path to your project directory (```e.g. /home/username/telegram-bot-killer/```).
 
 
 ## 📦 Important Notes

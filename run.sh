@@ -58,19 +58,12 @@ echo "[INFO] === $(date '+%Y-%m-%d %H:%M:%S') - Run Finished ===" >> "$LOG_FILE"
 
 # === keep logs for a certain number of days ===
 for ((i=0; i<DAYS_TO_KEEP; i++)); do
-    EXCLUDES+="! -name \"log-$(date -d \"$i day ago\" +%Y-%m-%d).log\" "
+    EXCLUDES+="! -name \"log-$(date -d "$i day ago" +%Y-%m-%d).log\" "
 done
+
 echo "[INFO] Cleaning up old logs..." >> "$LOG_FILE"
 eval "find \"$LOG_DIR\" -type f -name \"log-*.log\" $EXCLUDES -exec echo \"[INFO] Deleting: {}\" >> \"$LOG_FILE\" \; -exec rm {} \;"
 eval "find \"$PROJECT_DIR\" -type f -name \"log-*.log\" $EXCLUDES -exec echo \"[INFO] Deleting: {}\" >> \"$LOG_FILE\" \; -exec rm {} \;"
-
-# example of how to run the script:
-# find "/www/wwwroot/telegram-bot-killer/logs-cron" -type f -name "log-*.log" \
-# ! -name "log-2025-06-24.log" \
-# ! -name "log-2025-06-23.log" \
-# ! -name "log-2025-06-22.log" \
-# -exec echo "Deleting: {}" \; \
-# -exec rm {} \;
 
 # === end of script ===
 echo "[INFO] Script completed successfully." >> "$LOG_FILE"
