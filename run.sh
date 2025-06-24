@@ -49,6 +49,11 @@ fi
 # === run the binary and log output ===
 echo "[INFO] === $(date '+%Y-%m-%d %H:%M:%S') - Run Started ===" >> "$LOG_FILE"
 "$BINARY" >> "$LOG_FILE" 2>&1
+# set binary to executable if not already
+if [ ! -x "$BINARY" ]; then
+    chmod +x "$BINARY"
+    echo "[INFO] Set executable permission for $BINARY" >> "$LOG_FILE"
+fi
 echo "[INFO] === $(date '+%Y-%m-%d %H:%M:%S') - Run Finished ===" >> "$LOG_FILE"
 
 # === keep logs for a certain number of days ===
